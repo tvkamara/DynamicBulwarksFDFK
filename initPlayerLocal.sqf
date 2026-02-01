@@ -32,6 +32,10 @@ player setVariable ["killPoints", _killPoints, true];
 
 hitMarkers = [];
 
+if (isServer || serverCommandAvailable "#kick") then {
+    [] execVM "pickBulwarkPos.sqf";
+};
+
 //Show the Bulwark label on screen
 onEachFrame {
     if(!isNil "bulwarkBox") then {
