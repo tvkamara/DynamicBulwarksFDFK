@@ -1,6 +1,13 @@
+_player = _this select 0;
+
 waitUntil {!isNil "bulwarkBox"};
 ["Terminate"] call BIS_fnc_EGSpectator;
 player setVariable ["buildItemHeld", false];
+
+// Read mission params locally (robust for JIP / timing)
+private _startWeapon = (["PLAYER_STARTWEAPON", 1] call BIS_fnc_getParamValue) == 1;
+private _startMap    = (["PLAYER_STARTMAP",    1] call BIS_fnc_getParamValue) == 1;
+private _startNVG    = (["PLAYER_STARTNVG",    1] call BIS_fnc_getParamValue) == 1;
 
 //Make player immune to fall damage / immune to all damage while incapacitated / immune with a medikit
 player addEventHandler ["HandleDamage", {
@@ -35,7 +42,6 @@ player addEventHandler ["HandleDamage", {
   [_container] remoteExecCall ["loot_fnc_deleteIfEmpty", 2];
 }]] remoteExec ['addEventHandler', 0, true];
 
-_player = _this select 0;
 removeHeadgear _player;
 removeGoggles _player;
 removeVest _player;
@@ -44,19 +50,19 @@ removeAllWeapons _player;
 removeAllAssignedItems _player;
 _player setPosASL ([bulwarkBox] call bulwark_fnc_findPlaceAround);
 
-if(PLAYER_STARTWEAPON) then {
+if (_startWeapon) then {
     _player addMagazine "16Rnd_9x21_Mag";
     _player addMagazine "16Rnd_9x21_Mag";
     _player addWeapon "hgun_P07_F";
 };
 
-if(PLAYER_STARTMAP) then {
+if (_startMap) then {
     _player addItem "ItemMap";
     _player assignItem "ItemMap";
     _player linkItem "ItemMap";
 };
 
-if(PLAYER_STARTNVG) then {
+if (_startNVG) then {
     _player addItem "Integrated_NVG_F";
     _player assignItem "Integrated_NVG_F";
     _player linkItem "Integrated_NVG_F";
