@@ -152,14 +152,51 @@ If you are knocked unconscious but you have a Medikit in your inventory you will
 <br />
 <font color='#FFCC00'>You won't survive this fight but take as many of the bastards with you as you can!</font>"]];
 
-//Make player immune to fall damage and immune to all damage while incapacitated
-waitUntil {!isNil "TEAM_DAMAGE"};
-player removeAllEventHandlers 'HandleDamage';
-player addEventHandler ["HandleDamage", {
-  _beingRevived = player getVariable "RevByMedikit";
-  _players = allPlayers;
-  if ((_this select 4) == "" || lifeState player == "INCAPACITATED" || _beingRevived || ((_this select 3) in _players && !TEAM_DAMAGE && !((_this select 3) isEqualTo player))) then {0} else {_this call bis_fnc_reviveEhHandleDamage;};
+// Optional fall damage + revive logic (same as onPlayerRespawn)
+private _fallDamageEnabled = (["PLAYER_FALLDAMAGE", 0] call BIS_fnc_getParamValue) == 1;
+missionNamespace setVariable ["DB_fallDamageEnabled", _fallDamageEnabled];
+
+// Remove only *our* previous EH if it exists (don’t nuke others)
+private _oldEh = player getVariable ["DB_HandleDamageEH", -1];
+if (_oldEh >= 0) then {
+  player removeEventHandler ["HandleDamage", _oldEh];
+};
+
+private _eh = player addEventHandler ["HandleDamage", {
+  params ["_unit", "_selection", "_incDamage", "_source", "_projectile"];
+
+  private _beingRevived = _unit getVariable ["RevByMedikit", false];
+  private _teamDamage   = missionNamespace getVariable ["TEAM_DAMAGE", false];
+  private _players      = allPlayers;
+
+  private _isFall = (_projectile isEqualTo "" && isNull _source);
+
+  if (
+      (_isFall && !(missionNamespace getVariable ["DB_fallDamageEnabled", false]))
+      || lifeState _unit == "INCAPACITATED"
+      || _beingRevived
+      || (_source in _players && !_teamDamage && !(_source isEqualTo _unit))
+     ) then
+  {
+    0
+  }
+  else
+  {
+    if (_incDamage >= 0.9 && ("Medikit" in items _unit)) then {
+      _unit removeItem "Medikit";
+      _unit setVariable ["RevByMedikit", true, true];
+      _unit playActionNow "agonyStart";
+      _unit playAction "agonyStop";
+      _unit setDamage 0;
+      [_unit] remoteExec ["bulwark_fnc_revivePlayer", 2];
+      0
+    } else {
+      _this call BIS_fnc_reviveEhHandleDamage
+    };
+  };
 }];
+
+player setVariable ["DB_HandleDamageEH", _eh];
 
 waitUntil {!isNil "bulwarkCity"};
 

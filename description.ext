@@ -249,6 +249,13 @@ class Params
 		default = 3;
 	};
 
+	class PLAYER_FALLDAMAGE {
+		title = "Enable fall damage";
+		values[] = {0, 1};
+		texts[]  = {"No", "Yes"};
+		default  = 1;  // keep current behavior by default
+	};
+
 	class PLAYER_STARTMAP
 	{
 		title = "Start with map";
